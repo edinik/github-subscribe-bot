@@ -22,11 +22,13 @@ jobs:
       - run: npm ci
 
       - name: Restore state cache
-        uses: actions/cache@v4
+        id: state-cache
+        uses: actions/cache/restore@v4
         with:
           path: data/
-          key: release-state-${{ github.ref }}
-          restore-keys: release-state-
+          key: release-state-${{ github.repository }}-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            release-state-${{ github.repository }}-${{ github.ref_name }}-
 
       - name: Run release check
         env:
@@ -41,3 +43,10 @@ jobs:
           TARGET_LANG: ${{ vars.TARGET_LANG || 'Chinese' }}
           SUBSCRIBE_REPOS: ${{ vars.SUBSCRIBE_REPOS }}
         run: npm run check
+
+      - name: Save state cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data/
+          key: ${{ steps.state-cache.outputs.cache-primary-key }}
